@@ -3,7 +3,7 @@ require "test/unit"
 # PicoRuby shim: 'uart' is a runtime built-in; no-op the require under CRuby.
 $LOADED_FEATURES << "uart" unless $LOADED_FEATURES.include?("uart")
 
-# scservo の read_bytes は Machine.uptime_us / delay_ms に依存する。
+# scservo's read_bytes depends on Machine.uptime_us / delay_ms.
 # NOTE: Machine.reset! must be called in setup for any test that exercises the
 # read_bytes timeout path (current tests don't, but future ones will).
 unless defined?(Machine)
@@ -15,7 +15,7 @@ unless defined?(Machine)
   end
 end
 
-# write を記録し、queue_rx で仕込んだ応答 bytes を readpartial で返す UART モック。
+# UART mock that records writes and returns the response bytes staged via queue_rx through readpartial.
 class FakeUART
   attr_reader :written
   def initialize

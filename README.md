@@ -55,3 +55,7 @@ On-device require name (strip the `picoruby-` prefix):
 ```ruby
 require 'scservo'
 ```
+
+## License
+
+MIT

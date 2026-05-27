@@ -51,7 +51,7 @@ class SCServo
 
   # SCSCL::ReadPos (SCSCL.cpp:89-100) → SCS::readWord (SCS.cpp:232-242)
   # → SCS::Read (SCS.cpp:172-217). Retries up to 3 times on failure, returning
-  # the signed position or nil after all attempts exhausted.
+  # the unsigned position (0-4095) or nil after all attempts exhausted.
   def read_pos
     3.times do
       result = read_pos_once
