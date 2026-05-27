@@ -19,6 +19,9 @@ class EncodeDecodeWordTest < Test::Unit::TestCase
 end
 
 class WritePosFrameTest < Test::Unit::TestCase
+  # M1: Machine.reset! must be called in setup for any test that exercises
+  # the read_bytes timeout path. Current tests queue RX data so no timeout
+  # fires, but future timeout-path tests must add: def setup; Machine.reset!; end
   def test_write_pos_emits_goal_position_frame
     uart = FakeUART.new
     servo = SCServo.new(uart, id: 1)
@@ -37,6 +40,20 @@ class WritePosFrameTest < Test::Unit::TestCase
     body_sum = sent[2, sent.length - 3].inject(0) { |a, b| a + b }
     assert_equal (~body_sum) & 0xFF, sent.last
   end
+
+  def test_write_pos_encodes_time_and_speed_fields
+    uart = FakeUART.new
+    servo = SCServo.new(uart, id: 1)
+    ack_cksum = (~(1 + 2 + 0)) & 0xFF
+    uart.queue_rx([0xFF, 0xFF, 0x01, 0x02, 0x00, ack_cksum])
+
+    servo.write_pos(300, time_ms: 500, speed: 200)
+
+    sent = uart.written.bytes
+    assert_equal [0x01, 0x2C], sent[6, 2]   # pos 300
+    assert_equal [0x01, 0xF4], sent[8, 2]    # time 500 big-endian
+    assert_equal [0x00, 0xC8], sent[10, 2]   # speed 200 big-endian
+  end
 end
 
 class EnableTorqueFrameTest < Test::Unit::TestCase
@@ -53,4 +70,18 @@ class EnableTorqueFrameTest < Test::Unit::TestCase
     assert_equal 0x28, sent[5]  # REG_TORQUE
     assert_equal 0x01, sent[6]  # on
   end
+
+  def test_enable_torque_false_emits_zero
+    uart = FakeUART.new
+    servo = SCServo.new(uart, id: 1)
+    ack_cksum = (~(1 + 2 + 0)) & 0xFF
+    uart.queue_rx([0xFF, 0xFF, 0x01, 0x02, 0x00, ack_cksum])
+
+    servo.enable_torque(false)
+
+    sent = uart.written.bytes
+    assert_equal 0x00, sent[6]  # off
+  end
 end
+
+# read_pos is intentionally not characterized here (UART read-timing dependent; covered by on-device verification).

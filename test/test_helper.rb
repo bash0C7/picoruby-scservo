@@ -1,6 +1,11 @@
 require "test/unit"
 
+# PicoRuby shim: 'uart' is a runtime built-in; no-op the require under CRuby.
+$LOADED_FEATURES << "uart" unless $LOADED_FEATURES.include?("uart")
+
 # scservo の read_bytes は Machine.uptime_us / delay_ms に依存する。
+# NOTE: Machine.reset! must be called in setup for any test that exercises the
+# read_bytes timeout path (current tests don't, but future ones will).
 unless defined?(Machine)
   module Machine
     @@offset_us = 0

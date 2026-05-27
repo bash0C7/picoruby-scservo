@@ -6,6 +6,7 @@ Mirrors the [m5stack/StackChan FTServo_Arduino reference](https://github.com/m5s
 ## Dependency
 
 Requires [picoruby-uart](https://github.com/picoruby/picoruby-uart).
+`picoruby-uart` ships with R2P2-ESP32 as a PicoRuby built-in — no separate install needed.
 
 ## Public API
 
