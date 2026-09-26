@@ -17,7 +17,6 @@ Requires [picoruby-uart](https://github.com/picoruby/picoruby-uart).
 | `read_pos` | Read current position (0-4095 unsigned). Retries up to 3 times; returns `nil` on failure. |
 | `enable_torque(on = true)` | Enable (`true`) or disable (`false`) torque. |
 | `set_mode(mode)` | `:position` (default) or `:pwm`. |
-| `read_pos_raw_debug` | Diagnostic only: sends a read packet and returns a hex string of raw RX bytes, or `"<empty>"` if nothing came back. |
 
 ## Usage example
 
@@ -27,8 +26,8 @@ require 'scservo'
 
 uart = UART.new(
   unit: :ESP32_UART1,
-  txd_pin: 17,
-  rxd_pin: 18,
+  txd_pin: 6,
+  rxd_pin: 7,
   baudrate: 1_000_000
 )
 

@@ -10,17 +10,10 @@ Mirrors github.com/m5stack/StackChan FTServo_Arduino (SCS.cpp + SCSCL.cpp).
 - `read_pos` — returns unsigned position or nil (retries up to 3 times)
 - `enable_torque(on = true)` — torque enable/disable
 - `set_mode(mode)` — `:position` or `:pwm`
-- `read_pos_raw_debug` — diagnostic hex dump of raw RX bytes (returns String)
 
 ## Protocol implementation notes
 
-### drain_echo is a no-op
-
-`drain_echo` is intentionally a no-op. On ESP32-S3 UART1 in the StackChan
-wiring, TX bytes do NOT loop back on RX (verified 2026-05-21 via
-`read_pos_raw_debug` capture). The method signature is kept for
-compatibility with the Arduino half-duplex reference (SCS.cpp), but it
-must not consume any bytes.
+UART1 TX does not echo onto RX on StackChan, so the status packet follows a write or read request directly.
 
 ### Key constants (verified against mrblib/scservo.rb)
 
@@ -90,3 +83,4 @@ to match a test.
 
 - Conventional Commits: `feat` / `fix` / `docs` / `test` / `refactor` / `chore`.
 - Imperative mood, English only.
+- No comments. Code carries How, tests carry What (the test name), commit log carries Why. Keep only what the toolchain reads (magic comments, type annotations, rigor/steep directives).

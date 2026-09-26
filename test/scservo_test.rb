@@ -19,9 +19,6 @@ class EncodeDecodeWordTest < Test::Unit::TestCase
 end
 
 class WritePosFrameTest < Test::Unit::TestCase
-  # M1: Machine.reset! must be called in setup for any test that exercises
-  # the read_bytes timeout path. Current tests queue RX data so no timeout
-  # fires, but future timeout-path tests must add: def setup; Machine.reset!; end
   def test_write_pos_emits_goal_position_frame
     uart = FakeUART.new
     servo = SCServo.new(uart, id: 1)
@@ -31,12 +28,12 @@ class WritePosFrameTest < Test::Unit::TestCase
     servo.write_pos(300, time_ms: 0, speed: 0)
 
     sent = uart.written.bytes
-    assert_equal [0xFF, 0xFF], sent[0, 2]   # HEADER
-    assert_equal 0x01, sent[2]              # ID
-    assert_equal 9,    sent[3]              # LEN = params(7) + 2
-    assert_equal 0x03, sent[4]              # INSTR_WRITE
-    assert_equal 0x2A, sent[5]              # REG_GOAL_POS_L
-    assert_equal [0x01, 0x2C], sent[6, 2]   # pos 300 big-endian
+    assert_equal [0xFF, 0xFF], sent[0, 2]
+    assert_equal 0x01, sent[2]
+    assert_equal 9,    sent[3]
+    assert_equal 0x03, sent[4]
+    assert_equal 0x2A, sent[5]
+    assert_equal [0x01, 0x2C], sent[6, 2]
     body_sum = sent[2, sent.length - 3].inject(0) { |a, b| a + b }
     assert_equal (~body_sum) & 0xFF, sent.last
   end
@@ -50,9 +47,9 @@ class WritePosFrameTest < Test::Unit::TestCase
     servo.write_pos(300, time_ms: 500, speed: 200)
 
     sent = uart.written.bytes
-    assert_equal [0x01, 0x2C], sent[6, 2]   # pos 300
-    assert_equal [0x01, 0xF4], sent[8, 2]    # time 500 big-endian
-    assert_equal [0x00, 0xC8], sent[10, 2]   # speed 200 big-endian
+    assert_equal [0x01, 0x2C], sent[6, 2]
+    assert_equal [0x01, 0xF4], sent[8, 2]
+    assert_equal [0x00, 0xC8], sent[10, 2]
   end
 end
 
@@ -66,9 +63,9 @@ class EnableTorqueFrameTest < Test::Unit::TestCase
     servo.enable_torque(true)
 
     sent = uart.written.bytes
-    assert_equal 0x03, sent[4]  # INSTR_WRITE
-    assert_equal 0x28, sent[5]  # REG_TORQUE
-    assert_equal 0x01, sent[6]  # on
+    assert_equal 0x03, sent[4]
+    assert_equal 0x28, sent[5]
+    assert_equal 0x01, sent[6]
   end
 
   def test_enable_torque_false_emits_zero
@@ -80,8 +77,6 @@ class EnableTorqueFrameTest < Test::Unit::TestCase
     servo.enable_torque(false)
 
     sent = uart.written.bytes
-    assert_equal 0x00, sent[6]  # off
+    assert_equal 0x00, sent[6]
   end
 end
-
-# read_pos is intentionally not characterized here (UART read-timing dependent; covered by on-device verification).
