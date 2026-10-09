@@ -15,6 +15,8 @@ Requires [picoruby-uart](https://github.com/picoruby/picoruby-uart).
 | `SCServo.new(uart, id: N)` | Create instance. `uart` is a picoruby-uart UART object; `id` is the servo hardware ID (1-253, 0xFE = broadcast). |
 | `write_pos(pos, time_ms: 0, speed: 0)` | Move to position `pos` (0-4095). `time_ms` = move duration; `speed` = max speed (0 = max). |
 | `read_pos` | Read current position (0-4095 unsigned). Retries up to 3 times; returns `nil` on failure. |
+| `last_read_error` | Failure reason of the most recent read attempt (`:no_header`, `:short`, `:id_mismatch`, `:length_mismatch`, `:checksum`), or `nil` if it succeeded. |
+| `last_status` | Status/error byte from the most recent well-formed reply, or `nil` if none has arrived yet. |
 | `enable_torque(on = true)` | Enable (`true`) or disable (`false`) torque. |
 | `set_mode(mode)` | `:position` (default) or `:pwm`. |
 

@@ -53,6 +53,49 @@ class WritePosFrameTest < Test::Unit::TestCase
   end
 end
 
+class NoClearFakeUART < FakeUART
+  def clear_rx_buffer; end
+end
+
+class ReadPosErrorTrackingTest < Test::Unit::TestCase
+  def test_last_read_error_is_no_header_on_timeout_with_no_bytes
+    uart = NoClearFakeUART.new
+    servo = SCServo.new(uart, id: 1)
+
+    servo.send(:read_pos_once)
+
+    assert_equal :no_header, servo.last_read_error
+    assert_nil servo.last_status
+  end
+
+  def test_last_read_error_is_checksum_on_bad_checksum
+    uart = NoClearFakeUART.new
+    servo = SCServo.new(uart, id: 1)
+    uart.queue_rx([0xFF, 0xFF, 0x01, 0x04, 0x00, 0x01, 0x2C, 0x00])
+
+    servo.send(:read_pos_once)
+
+    assert_equal :checksum, servo.last_read_error
+    assert_nil servo.last_status
+  end
+
+  def test_last_status_is_set_from_nonzero_status_byte_on_good_reply
+    uart = NoClearFakeUART.new
+    servo = SCServo.new(uart, id: 1)
+    data = [0x01, 0x2C]
+    err_byte = 0x20
+    calc_sum = 1 + 4 + err_byte + data[0] + data[1]
+    cksum = (~calc_sum) & 0xFF
+    uart.queue_rx([0xFF, 0xFF, 0x01, 0x04, err_byte, data[0], data[1], cksum])
+
+    result = servo.send(:read_pos_once)
+
+    assert_equal 300, result
+    assert_nil servo.last_read_error
+    assert_equal 0x20, servo.last_status
+  end
+end
+
 class EnableTorqueFrameTest < Test::Unit::TestCase
   def test_enable_torque_emits_torque_register_frame
     uart = FakeUART.new

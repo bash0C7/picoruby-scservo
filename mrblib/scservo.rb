@@ -39,6 +39,14 @@ class SCServo
     nil
   end
 
+  def last_read_error
+    @last_read_error
+  end
+
+  def last_status
+    @last_status
+  end
+
   def enable_torque(on = true)
     value = on ? 0x01 : 0x00
     gen_write([REG_TORQUE, value])
@@ -59,22 +67,45 @@ class SCServo
     @uart.clear_rx_buffer
     send_packet(INSTR_READ, [REG_PRESENT_POS_L, 0x02])
     @uart.flush
-    return nil unless check_head
+    unless check_head
+      @last_read_error = :no_header
+      return nil
+    end
     body_header = read_bytes(3, READ_TIMEOUT_MS)
-    return nil if body_header.nil?
+    if body_header.nil?
+      @last_read_error = :short
+      return nil
+    end
     id_byte  = body_header.bytes[0]
     len_byte = body_header.bytes[1]
     err_byte = body_header.bytes[2]
-    return nil if id_byte != @id
-    return nil if len_byte != (2 + 2)
+    if id_byte != @id
+      @last_read_error = :id_mismatch
+      return nil
+    end
+    if len_byte != (2 + 2)
+      @last_read_error = :length_mismatch
+      return nil
+    end
     data = read_bytes(2, READ_TIMEOUT_MS)
-    return nil if data.nil?
+    if data.nil?
+      @last_read_error = :short
+      return nil
+    end
     cksum_byte = read_bytes(1, READ_TIMEOUT_MS)
-    return nil if cksum_byte.nil?
+    if cksum_byte.nil?
+      @last_read_error = :short
+      return nil
+    end
     calc_sum = id_byte + len_byte + err_byte
     data.bytes.each { |b| calc_sum += b }
     expected = (~calc_sum) & 0xFF
-    return nil if cksum_byte.bytes[0] != expected
+    if cksum_byte.bytes[0] != expected
+      @last_read_error = :checksum
+      return nil
+    end
+    @last_read_error = nil
+    @last_status = err_byte
     decode_word(data.bytes[0], data.bytes[1])
   end
 
